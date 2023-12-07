@@ -1,0 +1,9 @@
+docker login
+docker build exxam_bott .
+docker run -it exxam_bott .
+pip freeze req.txt
+pip install -r req.txt
+docker tag exxam_bott najmitdinovavaz/exxam_bott
+docker push najmitdinovavaz/exxam_bott
+docker run -it --name cont_my exxam_bott
+docker compose up

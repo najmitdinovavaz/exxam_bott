@@ -39,4 +39,4 @@ print(10)
 
 2 - javob
 
-
+docker exec -it kwork_db psql -U postgres

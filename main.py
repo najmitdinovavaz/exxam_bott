@@ -1,24 +1,16 @@
 import asyncio
 import logging
 import sys
-from subprocess import call
-
-import emoji
-import types
 
 import httpx
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
+from aiogram.filters.command import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message
-from aiogram.utils.markdown import hbold
-from aiogram import F
-from aiogram.filters.command import Command
-from aiogram import types
 from bs4 import BeautifulSoup
-from geopy.distance import geodesic
 
 from buttons import number_button, start_button, men_or_women_button, training
 
@@ -38,7 +30,7 @@ async def start_handler(message: Message):
 
 
 @dp.message(lambda message: message.text == "NewPost")
-async def new_handler(message: Message, state: FSMContext):
+async def new_handler(message: Message):
     await message.answer("https://www.fitnessblender.com/")
 
 

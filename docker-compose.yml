@@ -1,0 +1,28 @@
+version: '3.11'
+
+
+services:
+  bot:
+    build: .
+    restart: always
+    container_name: exxam_bott
+    environment:
+      BOT_TOKEN: 6407054173:AAGLVOeIDhxDCT606vluqU1wBu8S_v6yut4
+    depends_on:
+      - pg
+    command: python3 main.py
+
+
+  pg:
+    image: postgres
+    restart: always
+    container_name: exxam_bott
+    environment:
+      POSTGRES_PASSWORD: 1
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data/
+
+volumes:
+  pg_data:
