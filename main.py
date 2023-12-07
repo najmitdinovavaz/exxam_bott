@@ -1,91 +1,68 @@
-import asyncio
-import logging
-import sys
+import asyncio, logging, sys
+from os import getenv
 
-import httpx
-from aiogram import Bot, Dispatcher
-from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart
-from aiogram.filters.command import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message
-from bs4 import BeautifulSoup
+from aiogram import Dispatcher, Bot
+from aiogram.filters import CommandStart
+from aiogram.fsm.storage.memory import MemoryStorage
+from dotenv import load_dotenv
+from sqlalchemy import BIGINT, insert, select, create_engine
+from sqlalchemy.orm import declarative_base, Mapped, mapped_column, Session
 
-from buttons import number_button, start_button, men_or_women_button, training
+BOT_TOKEN = getenv("BOT_TOKEN")
+dp = Dispatcher(storage=MemoryStorage())
 
-TOKEN = "6407054173:AAGLVOeIDhxDCT606vluqU1wBu8S_v6yut4"
+load_dotenv()
+Base = declarative_base()
+DB_USER = getenv("DB_USER")
+DB_PASSWORD = getenv("DB_PASSWORD")
+DB_NAME = getenv("DB_NAME")
+DB_HOST = getenv("DB_HOST")
+DB_CONFIG = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+engine = create_engine(DB_CONFIG)
+session = Session(engine)
 
-dp = Dispatcher()
+
+class User(Base):
+    __tablename__ = "users"
+    id: Mapped[int] = mapped_column(__type_pos=BIGINT, autoincrement=True, primary_key=True)
+    user_id: Mapped[int] = mapped_column(__type_pos=BIGINT)
+    fullname: Mapped[str] = mapped_column()
+    username: Mapped[str] = mapped_column(nullable=True)
+
+    def insert(self, user_id, fullname, username):
+        user_data = {
+            "user_id": user_id,
+            "fullname": fullname,
+            "username": username,
+        }
+        user: User | None = session.execute(select(User).where(User.user_id == user_id)).fetchone()
+        if not user:
+            query = insert(User).values(**user_data)
+            session.execute(query)
+            session.commit()
+
+    def select(self):
+        users_datas = session.execute(select(User.user_id, User.fullname, User.username)).fetchall()
+        return users_datas
 
 
-class Menu(StatesGroup):
-    menu = State()
+Base.metadata.create_all(engine)
 
 
 @dp.message(CommandStart())
-async def start_handler(message: Message):
-    await message.answer(f"Assalomu alaykum ! Bu bo'timiz sizga kunlik qiladigan 🏋️ mashqlarni ko'rsatib beradi",
-                         reply_markup=number_button())
+async def start_handler(msg: Message, state: FSMContext):
+    User.insert(msg.from_user.id, msg.from_user.full_name, msg.from_user.username)
+    await msg.answer(f"Hello - 👤 {msg.from_user.full_name}")
+    print(f"👤 - {msg.from_user.full_name}")
 
 
-@dp.message(lambda message: message.text == "NewPost")
-async def new_handler(message: Message):
-    await message.answer("https://www.fitnessblender.com/")
-
-
-@dp.message(Command)
-async def new_handler(message: Message, state: FSMContext):
-    if message.text == "NewPost":
-        await message.answer("⏳")
-        response = httpx.get("https://www.fitnessblender.com/")
-        soup = BeautifulSoup(response.content, 'html.parser')
-        for i in soup.find_all("div", "summary-group"):
-            await message.answer(f"{i.find_all('h1', 'content-title').text}")
-        await message.answer(f"Choose one of the buttons ⤵")
-        await state.set_state(Menu.menu)
-
-
-@dp.message(lambda message: message.text == "Filial 📍")
-async def loc_handler(message: Message):
-    await message.answer_location(41.30465070299682, 69.25317846453066, reply_markup=number_button())
-
-
-@dp.message(lambda message: message.text == "Start ✅")
-async def starts_handler(message: Message):
-    await message.answer(f"Quydagilardan birontasini tanlang 👇", reply_markup=start_button())
-
-
-@dp.message(lambda message: message.text == "Men 🧍‍♂️" or "Woman 🧍‍♀️")
-async def men_handler(message: Message):
-    await message.answer(f"Quydagilarni birontasini tanlang 👇", reply_markup=men_or_women_button())
-
-
-@dp.message(lambda message: message.text == "1 - oy")
-async def training_handler(message: Message):
-    await message.answer(f"Quydagilarni birontasini tanlang 👇", reply_markup=training())
-
-
-@dp.message(lambda message: message.text == "3 - oy" or "4 - oy")
-async def train_handler(message: Message):
-    await message.answer(f"Quydagilarni birontasini tanlang 👇", reply_markup=training())
-
-
-@dp.message(lambda message: message.text == "NewPost")
-async def new_handler(message: Message, state: FSMContext):
-    response = httpx.get("https://www.fitnessblender.com/")
-    soup = BeautifulSoup(response.content, 'html.parser')
-    for i in soup.find_all("div", "summary-group"):
-        await message.answer(f"{i.find_all('h1', 'content-title').text}")
-    await message.answer(f"Choose one of the buttons ⤵", reply_markup=number_button())
-    await state.set_state(Menu.menu)
-
-
-async def main() -> None:
-    bot = Bot(TOKEN, parse_mode=ParseMode.HTML)
+async def main():
+    bot = Bot(token=BOT_TOKEN)
     await dp.start_polling(bot)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main())
