@@ -1,11 +1,13 @@
-import asyncio, logging, sys
+import asyncio
+import logging
+import sys
 from os import getenv
 
-from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
 from aiogram import Dispatcher, Bot
 from aiogram.filters import CommandStart
+from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import Message
 from dotenv import load_dotenv
 from sqlalchemy import BIGINT, insert, select, create_engine
 from sqlalchemy.orm import declarative_base, Mapped, mapped_column, Session

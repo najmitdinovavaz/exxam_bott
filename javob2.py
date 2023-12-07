@@ -80,7 +80,7 @@ async def menu_handler(msg: Message, state: FSMContext):
         await msg.answer("Quyidagilarni birini tanlang ⤵️", reply_markup=start_menu())
         await state.set_state(States.start_menu)
     elif msg.text == "Admin 👨🏻‍💻":
-        await msg.answer("@f_ismoilovv", reply_markup=menu_buttons())
+        await msg.answer("@avazvf", reply_markup=menu_buttons())
 
 
 @dp.message(States.start_menu)
