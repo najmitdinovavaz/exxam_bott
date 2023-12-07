@@ -3,6 +3,8 @@ docker build exxam_bott .
 docker run -it exxam_bott .
 pip freeze req.txt
 pip install -r req.txt
+docker exec -it exxam_bot psql -U postgres
+create database users;
 docker tag exxam_bott najmitdinovavaz/exxam_bott
 docker push najmitdinovavaz/exxam_bott
 docker run -it --name cont_my exxam_bott
